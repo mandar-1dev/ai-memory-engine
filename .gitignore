@@ -1,0 +1,10 @@
+venv/
+__pycache__/
+*.pyc
+.env
+server.log
+server.pid
+chroma_data/
+node_modules/
+.DS_Store
+*.egg-info/

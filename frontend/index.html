@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Memory Engine</title>
+  <style>
+    :root {
+      --ink: #1b1a17;
+      --paper: #f6f3ec;
+      --panel: #ffffff;
+      --accent: #b5502f;
+      --accent-soft: #e8d9c8;
+      --line: #ddd5c4;
+      --mono: 'JetBrains Mono', 'Courier New', monospace;
+      --serif: 'Georgia', 'Iowan Old Style', serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: -apple-system, Segoe UI, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 28px 32px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    header h1 {
+      font-family: var(--serif);
+      font-size: 26px;
+      margin: 0;
+      letter-spacing: -0.01em;
+    }
+
+    header .tag {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: #7a7364;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    #auth-bar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-family: var(--mono);
+      font-size: 13px;
+    }
+
+    #auth-bar input {
+      font-family: var(--mono);
+      font-size: 13px;
+      padding: 6px 8px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 4px;
+      width: 140px;
+    }
+
+    button {
+      font-family: var(--mono);
+      font-size: 13px;
+      background: var(--ink);
+      color: var(--paper);
+      border: none;
+      padding: 7px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button.accent {
+      background: var(--accent);
+    }
+
+    button.ghost {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    #status-pill {
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--accent-soft);
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 20px;
+      padding: 24px 32px 60px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 20px;
+    }
+
+    .panel h2 {
+      font-family: var(--serif);
+      font-size: 17px;
+      margin: 0 0 4px;
+    }
+
+    .panel .desc {
+      font-size: 12px;
+      color: #7a7364;
+      margin-bottom: 14px;
+    }
+
+    label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #7a7364;
+      display: block;
+      margin-bottom: 4px;
+      margin-top: 10px;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      font-size: 13px;
+      font-family: inherit;
+      background: #fbfaf6;
+    }
+
+    textarea {
+      min-height: 70px;
+      resize: vertical;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .list-item {
+      border-top: 1px solid var(--line);
+      padding: 10px 0;
+      font-size: 13px;
+    }
+
+    .list-item:first-child {
+      border-top: none;
+    }
+
+    .list-item .meta {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: #a08f78;
+      margin-top: 4px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 20px;
+      margin-right: 6px;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .stat {
+      background: #fbfaf6;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .stat .num {
+      font-family: var(--serif);
+      font-size: 26px;
+    }
+
+    .stat .label {
+      font-size: 10px;
+      text-transform: uppercase;
+      color: #7a7364;
+    }
+
+    #chat-log {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+    }
+
+    .msg {
+      padding: 8px 10px;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+
+    .msg.user {
+      background: var(--accent-soft);
+    }
+
+    .msg.assistant {
+      background: #fbfaf6;
+      border: 1px solid var(--line);
+    }
+
+    .empty {
+      color: #a08f78;
+      font-size: 12px;
+      font-style: italic;
+    }
+
+    .full-width {
+      grid-column: 1 / -1;
+    }
+
+    code.k {
+      font-family: var(--mono);
+      font-size: 11px;
+      background: var(--accent-soft);
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div>
+      <h1>AI Memory Engine</h1>
+      <div class="tag">Personal Knowledge OS — core MVP</div>
+    </div>
+    <div id="auth-bar">
+      <span id="status-pill">signed out</span>
+      <input id="email" placeholder="email" value="mandar@example.com" />
+      <input id="password" placeholder="password" type="password" value="testpass123" />
+      <input id="name" placeholder="full name (register)" value="Mandar" />
+      <button class="ghost" onclick="register()">Register</button>
+      <button onclick="login()">Login</button>
+      <button class="ghost" onclick="logout()">Logout</button>
+    </div>
+  </header>
+
+  <main>
+
+    <section class="panel">
+      <h2>Dashboard</h2>
+      <div class="desc">Live stats pulled from <code class="k">/api/dashboard</code></div>
+      <div class="stat-grid">
+        <div class="stat">
+          <div class="num" id="stat-memories">–</div>
+          <div class="label">Memories</div>
+        </div>
+        <div class="stat">
+          <div class="num" id="stat-notes">–</div>
+          <div class="label">Notes</div>
+        </div>
+        <div class="stat">
+          <div class="num" id="stat-conversations">–</div>
+          <div class="label">Conversations</div>
+        </div>
+        <div class="stat">
+          <div class="num" id="stat-health">–</div>
+          <div class="label">Health Score</div>
+        </div>
+      </div>
+      <button class="ghost row" style="margin-top:14px" onclick="loadDashboard()">Refresh</button>
+    </section>
+
+    <section class="panel">
+      <h2>Add a Memory</h2>
+      <div class="desc">Auto-enriched with topic, summary, keywords, emotion via Gemini, then embedded into ChromaDB.
+      </div>
+      <label>Content</label>
+      <textarea id="memory-content"
+        placeholder="e.g. I prefer FastAPI over Django for new projects because of async support."></textarea>
+      <div class="row">
+        <button class="accent" onclick="createMemory()">Save memory</button>
+      </div>
+      <div id="memory-list" style="margin-top:14px"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Notes</h2>
+      <div class="desc">Markdown notes, auto-summarized and embedded for search.</div>
+      <label>Title</label>
+      <input id="note-title" placeholder="Note title" />
+      <label>Content</label>
+      <textarea id="note-content" placeholder="Write your note..."></textarea>
+      <div class="row">
+        <button class="accent" onclick="createNote()">Save note</button>
+        <button class="ghost" onclick="loadNotes()">Refresh</button>
+      </div>
+      <div id="note-list" style="margin-top:14px"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Semantic Search</h2>
+      <div class="desc">Vector similarity search across memories + notes via ChromaDB.</div>
+      <label>Query</label>
+      <input id="search-query" placeholder="What do I know about...?" />
+      <div class="row">
+        <button class="accent" onclick="runSearch()">Search</button>
+      </div>
+      <div id="search-results" style="margin-top:14px"></div>
+    </section>
+
+    <section class="panel full-width">
+      <h2>RAG Assistant</h2>
+      <div class="desc">Full pipeline: embed → retrieve → generate (Gemini) → memory update.</div>
+      <div id="chat-log">
+        <div class="empty">No messages yet.</div>
+      </div>
+      <div class="row">
+        <input id="chat-input" placeholder="Ask something about what you've stored..." style="flex:1" />
+        <button class="accent" onclick="sendChat()">Send</button>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const API = 'http://localhost:8080';
+    let TOKEN = localStorage.getItem('token') || null;
+    let CONVERSATION_ID = null;
+
+    function authHeaders() {
+      return TOKEN ? { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+    }
+
+    function setStatus(text, ok) {
+      const pill = document.getElementById('status-pill');
+      pill.textContent = text;
+      pill.style.background = ok ? '#d9ecd9' : '#e8d9c8';
+    }
+
+    async function register() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const full_name = document.getElementById('name').value;
+      const res = await fetch(`${API}/api/auth/register`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, full_name })
+      });
+      const data = await res.json();
+      if (res.ok) { onLogin(data); } else { alert(data.detail || 'Register failed'); }
+    }
+
+    async function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const res = await fetch(`${API}/api/auth/login`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (res.ok) { onLogin(data); } else { alert(data.detail || 'Login failed'); }
+    }
+
+    function onLogin(data) {
+      TOKEN = data.access_token;
+      localStorage.setItem('token', TOKEN);
+      setStatus('signed in as ' + data.user.email, true);
+      loadDashboard(); loadNotes(); loadMemories();
+    }
+
+    function logout() {
+      TOKEN = null;
+      localStorage.removeItem('token');
+      setStatus('signed out', false);
+    }
+
+    async function loadDashboard() {
+      if (!TOKEN) return;
+      const res = await fetch(`${API}/api/dashboard`, { headers: authHeaders() });
+      if (!res.ok) return;
+      const d = await res.json();
+      document.getElementById('stat-memories').textContent = d.total_memories;
+      document.getElementById('stat-notes').textContent = d.total_notes;
+      document.getElementById('stat-conversations').textContent = d.total_conversations;
+      document.getElementById('stat-health').textContent = d.memory_health_score;
+    }
+
+    async function createMemory() {
+      const content = document.getElementById('memory-content').value.trim();
+      if (!content) return;
+      const res = await fetch(`${API}/api/memories`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ content }) });
+      const data = await res.json();
+      if (!res.ok) { alert(data.detail || 'Failed to save memory'); return; }
+      document.getElementById('memory-content').value = '';
+      loadMemories(); loadDashboard();
+    }
+
+    async function loadMemories() {
+      if (!TOKEN) return;
+      const res = await fetch(`${API}/api/memories?limit=10`, { headers: authHeaders() });
+      const data = await res.json();
+      const el = document.getElementById('memory-list');
+      if (!data.length) { el.innerHTML = '<div class="empty">No memories yet.</div>'; return; }
+      el.innerHTML = data.map(m => `
+    <div class="list-item">
+      <span class="badge">${m.category || 'other'}</span><span class="badge">${m.memory_type}</span>
+      ${m.summary || m.content}
+      <div class="meta">topic: ${m.topic || '-'} · importance: ${m.importance_score?.toFixed(2)} · ${new Date(m.created_at).toLocaleString()}</div>
+    </div>`).join('');
+    }
+
+    async function createNote() {
+      const title = document.getElementById('note-title').value.trim();
+      const content = document.getElementById('note-content').value.trim();
+      if (!title || !content) return;
+      const res = await fetch(`${API}/api/notes`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ title, content }) });
+      const data = await res.json();
+      if (!res.ok) { alert(data.detail || 'Failed to save note'); return; }
+      document.getElementById('note-title').value = '';
+      document.getElementById('note-content').value = '';
+      loadNotes(); loadDashboard();
+    }
+
+    async function loadNotes() {
+      if (!TOKEN) return;
+      const res = await fetch(`${API}/api/notes`, { headers: authHeaders() });
+      const data = await res.json();
+      const el = document.getElementById('note-list');
+      if (!data.length) { el.innerHTML = '<div class="empty">No notes yet.</div>'; return; }
+      el.innerHTML = data.map(n => `
+    <div class="list-item">
+      <strong>${n.title}</strong><br/>${n.ai_summary || n.content.slice(0, 120)}
+      <div class="meta">${new Date(n.updated_at).toLocaleString()}</div>
+    </div>`).join('');
+    }
+
+    async function runSearch() {
+      const query = document.getElementById('search-query').value.trim();
+      if (!query) return;
+      const res = await fetch(`${API}/api/search`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ query, top_k: 5 }) });
+      const data = await res.json();
+      const el = document.getElementById('search-results');
+      if (!res.ok) { el.innerHTML = `<div class="empty">${data.detail || 'search failed'}</div>`; return; }
+      if (!data.results.length) { el.innerHTML = '<div class="empty">No results.</div>'; return; }
+      el.innerHTML = data.results.map(r => `
+    <div class="list-item">
+      <span class="badge">${r.source_type}</span>${r.title || ''} — score ${r.score}
+      <div class="meta">${r.snippet}</div>
+    </div>`).join('');
+    }
+
+    async function sendChat() {
+      const input = document.getElementById('chat-input');
+      const message = input.value.trim();
+      if (!message) return;
+      appendMsg('user', message);
+      input.value = '';
+      const res = await fetch(`${API}/api/chat`, {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({ message, conversation_id: CONVERSATION_ID, top_k: 5 })
+      });
+      const data = await res.json();
+      if (!res.ok) { appendMsg('assistant', data.detail || 'Chat failed'); return; }
+      CONVERSATION_ID = data.conversation_id;
+      appendMsg('assistant', data.answer);
+      loadDashboard(); loadMemories();
+    }
+
+    function appendMsg(role, text) {
+      const log = document.getElementById('chat-log');
+      if (log.querySelector('.empty')) log.innerHTML = '';
+      const div = document.createElement('div');
+      div.className = 'msg ' + role;
+      div.textContent = text;
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    document.getElementById('chat-input').addEventListener('keydown', e => { if (e.key === 'Enter') sendChat(); });
+
+    if (TOKEN) { setStatus('signed in (saved session)', true); loadDashboard(); loadNotes(); loadMemories(); }
+  </script>
+</body>
+
+</html>

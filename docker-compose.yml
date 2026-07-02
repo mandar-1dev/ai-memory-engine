@@ -1,0 +1,56 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: memory-engine-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: memoryengine
+      POSTGRES_PASSWORD: memoryengine_dev_pw
+      POSTGRES_DB: memory_engine
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U memoryengine -d memory_engine"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: memory-engine-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    container_name: memory-engine-backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://memoryengine:memoryengine_dev_pw@postgres:5432/memory_engine
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8080:8000"
+    volumes:
+      - chroma_data:/app/chroma_data
+
+volumes:
+  pgdata:
+  chroma_data:
